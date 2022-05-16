@@ -1,0 +1,10 @@
+{
+    "sensor": {
+        "description": "sensor pools",
+        "slots": 32
+    },
+    "ref_table": {
+        "description": "ref table pools",
+        "slots": 32
+    }
+}

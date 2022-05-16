@@ -1,0 +1,70 @@
+version: "3.7"
+services:
+  database:
+    image: postgres:13
+    ports:
+      - "5417:5432"
+    environment:
+      POSTGRES_DB: ds_airflow
+      POSTGRES_USER: ds_airflow
+      POSTGRES_PASSWORD: insecure
+
+  dso_database:
+    image: postgres:13
+    ports:
+      - "5416:5432"
+    environment:
+      POSTGRES_DB: dataservices
+      POSTGRES_USER: dataservices
+      POSTGRES_PASSWORD: insecure
+
+  airflow:
+    build: src
+    container_name: airflow
+    depends_on:
+      - database
+      - dso_database
+    environment:
+      AIRFLOW_CONN_POSTGRES_DEFAULT:
+        "postgresql://dataservices:insecure@dso_database:5432\
+        /dataservices?cursor=dictcursor&"
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: "postgresql://ds_airflow:insecure@database:5432/ds_airflow"
+      OAUTH_TOKEN_EXPIRES_MARGIN: 20
+      FERNET_KEY: ${FERNET_KEY:-"YlCImzjge_TeZc7jPJ7Jz2pgOtb4yTssA1pVyqIADWg="}
+      SECRET_KEY: ${SECRET_KEY:-"105398791e3fbc571de0f053f1e577ad92e257d321242405d31294594312"}
+      AIRFLOW_LOGGING_LEVEL: ${AIRFLOW_LOGGING_LEVEL:-INFO}
+      AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080/
+      DATAPUNT_ENVIRONMENT: development
+      SLACK_WEBHOOK_HOST: https://hooks.slack.com/services
+      SLACK_WEBHOOK: ${SLACK_WEBHOOK}
+      OS_USERNAME: vsd_user
+      OS_PASSWORD: ${VSD_PASSWD}
+      OS_TENANT_NAME: 4028c44d91dc48b8990069433c203c1f
+      OS_AUTH_URL: https://identity.stack.cloudvps.com/v2.0
+      SHARED_DIR: /tmp
+      SCHEMA_URL: ${SCHEMA_URL}
+      AIRFLOW_USER_ADMIN_PASSWD: ${dataservices_airflow_user_admin_passwd}
+      AIRFLOW_USER_DATASERVICES_PASSWD: ${dataservices_airflow_user_dataservices_passwd}
+      AIRFLOW_USER_TEAM_RUIMTE_PASSWD: ${dataservices_airflow_user_team_ruimte_passwd}
+      OIDC_TOKEN_ENDPOINT: ${OIDC_TOKEN_ENDPOINT}
+      OIDC_CLIENT_ID: ${DATASERVICES_GOB_EXPORT_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${DATASERVICES_GOB_EXPORT_CLIENT_SECRET}
+      AIRFLOW_LOG_CLEANUP__MAX_LOG_AGE_IN_DAYS: 90
+      AIRFLOW_LOG_CLEANUP__ENABLE_DELETE_CHILD_LOG: "true"
+      SENDGRID_MAIL_FROM: ${SENDGRID_MAIL_FROM}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+    volumes:
+      - ./src/dags:/usr/local/airflow/dags
+      - ./src/plugins:/usr/local/airflow/plugins
+      - ./src/config/pools.json:/usr/local/airflow/config/pools.json
+      - ./src/vars:/usr/local/airflow/vars
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # extra_hosts:
+    #- "dockerhost:$DOCKERHOST"
+
+    ports:
+      - "8080:8080"
+    cap_add:
+      - SYS_PTRACE
+    # command: sleep infinity

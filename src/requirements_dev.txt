@@ -1,0 +1,21 @@
+# Base website
+-r ./requirements.txt
+
+# Tools for maintaining requirements.txt:
+pip-tools == 6.2.0
+pur
+
+
+# Useful extra developer packages:
+pre-commit == 2.14.0
+
+# Some installers need wheel support
+wheel == 0.34.1
+
+# Source code formatting
+black
+isort
+
+mypy==0.910
+
+pyupgrade
